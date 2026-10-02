@@ -1,0 +1,93 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Cast</title>
+<style>
+:root{--bg:#fff;--fg:#1d1d1f;--mut:#86868b;--card:#f5f5f7;--acc:#fa2d48;--line:#e5e5ea;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#000;--fg:#f5f5f7;--card:#1c1c1e;--line:#2c2c2e}}
+:root[data-theme=dark]{--bg:#000;--fg:#f5f5f7;--card:#1c1c1e;--line:#2c2c2e}
+*{box-sizing:border-box}html,body{height:100%;margin:0}body{background:var(--bg);color:var(--fg);font:15px/1.4 -apple-system,"SF Pro Text",Inter,system-ui,sans-serif;overflow:hidden}
+#app{height:100%;display:flex;flex-direction:column;max-width:760px;margin:auto;position:relative}
+main{flex:1;overflow-y:auto;padding:20px 18px 150px}
+.view{animation:in .35s cubic-bezier(.2,.8,.2,1)}@keyframes in{from{opacity:0;transform:translateY(14px)}to{opacity:1}}
+h1{font-size:32px;letter-spacing:-.02em;margin:6px 0 16px}h2{font-size:20px;margin:22px 0 10px}
+.row{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.art{width:48px;height:48px;border-radius:8px;flex:none;background-size:cover;background-position:center}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}.grid .art{width:100%;height:auto;aspect-ratio:1;border-radius:10px}
+.t{font-weight:600}.s{color:var(--mut);font-size:13px}.grow{flex:1;min-width:0}.grow>*{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+button,input{font:inherit;color:inherit}button{background:var(--card);border:0;border-radius:999px;padding:8px 14px;cursor:pointer;transition:transform .15s}button:active{transform:scale(.94)}
+.pri{background:var(--acc);color:#fff}.dan{background:#d70015;color:#fff}.ic{padding:6px 10px}
+input{background:var(--card);border:1px solid transparent;border-radius:10px;padding:10px 12px;width:100%}input:focus{outline:2px solid var(--acc)}
+button:focus-visible{outline:2px solid var(--acc)}
+nav{position:absolute;bottom:0;left:0;right:0;display:flex;background:color-mix(in srgb,var(--bg) 80%,transparent);backdrop-filter:blur(24px);border-top:1px solid var(--line);padding:6px 0 calc(6px + env(safe-area-inset-bottom,0px));z-index:5}
+nav button{flex:1;background:none;border-radius:8px;color:var(--mut);font-size:11px;padding:6px}nav button.on{color:var(--acc)}
+#mini{position:absolute;left:10px;right:10px;bottom:62px;background:color-mix(in srgb,var(--card) 88%,transparent);backdrop-filter:blur(24px);border-radius:14px;padding:8px;display:none;align-items:center;gap:10px;z-index:4;box-shadow:0 4px 20px #0003;cursor:pointer}
+#full{position:absolute;inset:0;background:var(--bg);z-index:10;transform:translateY(100%);transition:transform .45s cubic-bezier(.2,.8,.2,1);display:flex;flex-direction:column;align-items:center;padding:24px;gap:14px;overflow:auto}
+#full.open{transform:none}#full .big{width:min(70vw,340px);aspect-ratio:1;border-radius:16px;background-size:cover;box-shadow:0 20px 50px #0004;transition:transform .5s}
+#full.playing .big{transform:scale(1)}#full:not(.playing) .big{transform:scale(.86)}
+#yt{width:100%;max-width:420px;aspect-ratio:16/9;border:0;border-radius:12px;background:#000}
+.bub{max-width:78%;padding:8px 12px;border-radius:18px;background:var(--card);margin:4px 0;animation:in .25s}.me{margin-left:auto;background:var(--acc);color:#fff}
+.av{width:44px;height:44px;border-radius:50%;background:var(--acc) center/cover;color:#fff;display:grid;place-items:center;font-weight:700;flex:none}
+.tag{font-size:11px;background:var(--card);padding:2px 8px;border-radius:99px;color:var(--mut)}
+dialog{border:0;border-radius:16px;background:var(--bg);color:var(--fg);max-width:520px;max-height:80vh;padding:22px}dialog::backdrop{background:#0008}
+.toast{position:absolute;top:14px;left:50%;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:8px 16px;border-radius:99px;z-index:30;animation:in .3s}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style></head><body><div id="app"><main id="m"></main><div id="mini"></div><div id="full"></div>
+<nav id="nav"></nav></div><dialog id="dlg"></dialog>
+<script>
+const $=s=>document.querySelector(s);
+const G=['#fa2d48,#5e5ce6','#30d158,#0a84ff','#ff9f0a,#ff375f','#bf5af2,#64d2ff','#ffd60a,#ff453a','#0a84ff,#30d158'];
+const grad=i=>`linear-gradient(135deg,${G[i%G.length].split(',')[0]},${G[i%G.length].split(',')[1]})`;
+// Catalog: YouTube video IDs (public videos; availability depends on the uploader's embed settings)
+const CAT=[{id:'dQw4w9WgXcQ',t:'Never Gonna Give You Up',a:'Rick Astley'},{id:'JGwWNGJdvx8',t:'Shape of You',a:'Ed Sheeran'},{id:'kJQP7kiw5Fk',t:'Despacito',a:'Luis Fonsi'},{id:'fJ9rUzIMcZQ',t:'Bohemian Rhapsody',a:'Queen'},{id:'60ItHLz5WEA',t:'Faded',a:'Alan Walker'},{id:'RgKAFK5djSk',t:'See You Again',a:'Wiz Khalifa'}];
+let S;const KEY='cast.v1';
+const def=()=>({me:{name:'You',user:'you'+Math.floor(Math.random()*900+100),photo:''},tracks:CAT,playlists:[{id:'p1',name:'Favorites',ids:[CAT[0].id,CAT[3].id],owner:'me'}],friends:[{user:'maya',name:'Maya',demo:1},{user:'omar',name:'Omar',demo:1}],chats:{},pol:0});
+try{S=JSON.parse(localStorage.getItem(KEY))||def()}catch(e){S=def()}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast('Storage full or blocked: changes not saved')}};
+let tab='listen',cur=null,openChat=null,q='';
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const tr=id=>S.tracks.find(t=>t.id==id);
+const idx=id=>S.tracks.findIndex(t=>t.id==id);
+const art=(t,sz='')=>`<div class="art" style="background:${grad(idx(t.id))}"></div>`;
+function toast(m){const e=document.createElement('div');e.className='toast';e.textContent=m;$('#app').append(e);setTimeout(()=>e.remove(),2200)}
+function nav(){const T=[['listen','Listen Now'],['search','Search'],['lib','Library'],['people','People'],['me','Profile']];
+$('#nav').innerHTML=T.map(([k,l])=>`<button class="${tab==k?'on':''}" onclick="go('${k}')">${l}</button>`).join('')}
+function go(k){tab=k;openChat=null;render()}
+function songRow(t,extra=''){return `<div class="row" onclick="play('${t.id}')">${art(t)}<div class="grow"><div class="t">${esc(t.t)}</div><div class="s">${esc(t.a)}</div></div>${extra}<button class="ic" onclick="event.stopPropagation();pick('${t.id}')">⋯</button></div>`}
+function render(){nav();const m=$('#m');m.scrollTop=0;let h='';
+if(tab=='listen')h=`<h1>Listen Now</h1><div class="grid">${S.tracks.map(t=>`<div onclick="play('${t.id}')">${art(t)}<div class="t" style="margin-top:6px">${esc(t.t)}</div><div class="s">${esc(t.a)}</div></div>`).join('')}</div>`;
+if(tab=='search')h=`<h1>Search</h1><input id="q" placeholder="Search YouTube" value="${esc(q)}" oninput="q=this.value;sr()" onkeydown="if(event.key=='Enter')addYT()"><p class="s">Press Enter to search YouTube, or paste a link.</p><div id="res"></div>`;
+if(tab=='lib')h=`<h1>Library</h1><button class="pri" onclick="newPl()">New playlist</button>${S.playlists.map(p=>`<h2>${esc(p.name)} <span class="s">${p.ids.length} songs</span></h2><button onclick="sharePl('${p.id}')">Share with a friend</button> <button onclick="delPl('${p.id}')">Delete</button>${p.ids.map(i=>tr(i)).filter(Boolean).map(t=>songRow(t)).join('')||'<p class="s">Empty. Add songs with ⋯</p>'}`).join('')}`;
+if(tab=='people')h=openChat?chatView():`<h1>People</h1><div style="display:flex;gap:8px"><input id="fu" placeholder="Add a friend by username"><button class="pri" onclick="addF()">Add</button></div>${S.friends.length?S.friends.map(f=>`<div class="row" onclick="openChat='${f.user}';render()"><div class="av" style="background:${grad(f.user.length)}">${esc(f.name[0].toUpperCase())}</div><div class="grow"><div class="t">${esc(f.name)} ${f.demo?'<span class="tag">DEMO</span>':''}</div><div class="s">@${esc(f.user)}</div></div></div>`).join(''):'<p class="s">No friends yet. Add someone by username.</p>'}<p class="s">Friends and chats are stored on this device only. Demo friends are simulated and never reply.</p>`;
+if(tab=='me')h=`<h1>Profile</h1><div class="row" style="cursor:default"><div class="av" style="width:72px;height:72px;font-size:28px;${S.me.photo?`background-image:url(${S.me.photo})`:''}">${S.me.photo?'':esc(S.me.name[0].toUpperCase())}</div><div class="grow"><div class="t">${esc(S.me.name)}</div><div class="s">@${esc(S.me.user)}</div></div></div>
+<h2>Edit profile</h2><input type="file" id="ph" accept="image/*" onchange="photo(this)" style="margin-bottom:8px"><input id="dn" value="${esc(S.me.name)}" maxlength="30" placeholder="Display name" style="margin-bottom:8px"><input id="un" value="${esc(S.me.user)}" maxlength="20" placeholder="Username" style="margin-bottom:8px"><button class="pri" onclick="saveP()">Save changes</button>
+<h2>Privacy</h2><button onclick="policy()">Read the privacy policy</button>
+<h2>Delete account</h2><p class="s">Removes your profile, playlists, chats and friends from this device. This can't be undone.</p><button class="dan" onclick="del()">Delete account</button>`;
+m.innerHTML=`<div class="view">${h}</div>`;if(tab=='search')sr();mini()}
+function sr(){const k=q.toLowerCase();const r=S.tracks.filter(t=>(t.t+t.a).toLowerCase().includes(k));$('#res').innerHTML=r.map(t=>songRow(t)).join('')||'<p class="s">No match. Paste a YouTube link and press Enter.</p>'}
+async function addYT(){const x=q.match(/(?:v=|youtu\.be\/|embed\/)([\w-]{11})/);if(x){if(!tr(x[1])){S.tracks.push({id:x[1],t:'YouTube '+x[1].slice(0,4),a:'Added by you'});save()}return render()}
+if(q.trim().length<2)return;$('#res').innerHTML='<p class="s">Searching YouTube…</p>';
+try{const r=await fetch('/api/search?q='+encodeURIComponent(q.trim())),j=await r.json();if(!r.ok)throw new Error(j.error||'Search failed');
+j.forEach(t=>{if(!tr(t.id))S.tracks.push(t)});save();$('#res').innerHTML=j.map(t=>songRow(t)).join('')||'<p class="s">No results.</p>'}
+catch(e){$('#res').innerHTML='<p class="s">'+esc(e.message.includes('fetch')?'Search server not reachable. Run Cast through its server.':e.message)+'</p>'}}
+function play(id){cur=id;mini();full(true);}
+function mini(){const t=cur&&tr(cur),e=$('#mini');if(!t){e.style.display='none';return}e.style.display='flex';e.onclick=()=>full(true);e.innerHTML=`${art(t)}<div class="grow"><div class="t">${esc(t.t)}</div><div class="s">${esc(t.a)}</div></div><button class="ic" onclick="event.stopPropagation();stop()">✕</button>`}
+function full(open){const t=tr(cur),f=$('#full');if(!t)return;
+if(open&&!f.dataset.id!==cur||f.dataset.id!=cur){f.dataset.id=cur;f.innerHTML=`<button style="align-self:flex-start" onclick="$('#full').classList.remove('open')">⌄ Close</button><div class="big" style="background:${grad(idx(cur))}"></div><div style="text-align:center"><div class="t" style="font-size:20px">${esc(t.t)}</div><div class="s">${esc(t.a)}</div></div><iframe id="yt" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen src="https://www.youtube.com/embed/${cur}?autoplay=1&playsinline=1&rel=0"></iframe><p class="s" style="text-align:center;max-width:380px">Plays through the official YouTube player. If it stays blank, this page's host is blocking embeds, so open it on YouTube.</p><a href="https://www.youtube.com/watch?v=${cur}" target="_blank" rel="noopener"><button>Open on YouTube</button></a><button onclick="pick('${cur}')">Add to playlist or share</button>`}
+requestAnimationFrame(()=>{f.classList.add('open','playing')})}
+function stop(){cur=null;const f=$('#full');f.classList.remove('open','playing');f.dataset.id='';f.innerHTML='';mini()}
+function pick(id){const d=$('#dlg');d.innerHTML=`<h2 style="margin-top:0">${esc(tr(id).t)}</h2><div class="s">Add to playlist</div>${S.playlists.map(p=>`<div class="row" onclick="addTo('${p.id}','${id}')"><div class="grow">${esc(p.name)}</div></div>`).join('')}<div class="s" style="margin-top:12px">Send to a friend</div>${S.friends.map(f=>`<div class="row" onclick="sendSong('${f.user}','${id}')"><div class="grow">${esc(f.name)}</div></div>`).join('')||'<p class="s">Add friends first.</p>'}<p><button onclick="dlg.close()">Done</button></p>`;d.showModal()}
+function addTo(p,id){const pl=S.playlists.find(x=>x.id==p);if(!pl.ids.includes(id))pl.ids.push(id);save();dlg.close();toast('Added to '+pl.name);if(tab=='lib')render()}
+function newPl(){const d=$('#dlg');d.innerHTML=`<h2 style="margin-top:0">New playlist</h2><input id="pn" maxlength="40" placeholder="Name"><p><button class="pri" onclick="mk()">Create</button> <button onclick="dlg.close()">Cancel</button></p>`;d.showModal()}
+function mk(){const n=$('#pn').value.trim();if(!n)return;S.playlists.push({id:'p'+Date.now(),name:n,ids:[],owner:'me'});save();dlg.close();render()}
+function delPl(id){S.playlists=S.playlists.filter(p=>p.id!=id);save();render()}
+function push(u,o){(S.chats[u]=S.chats[u]||[]).push(o);save()}
+function sendSong(u,id){push(u,{from:'me',song:id,ts:Date.now()});dlg.close();toast('Sent to @'+u)}
+function sharePl(id){const p=S.playlists.find(x=>x.id==id);const d=$('#dlg');d.innerHTML=`<h2 style="margin-top:0">Share “${esc(p.name)}”</h2>${S.friends.map(f=>`<div class="row" onclick="push('${f.user}',{from:'me',pl:'${id}',ts:Date.now()});dlg.close();toast('Shared')"><div class="grow">${esc(f.name)}</div></div>`).join('')||'<p class="s">Add friends first.</p>'}<p><button onclick="dlg.close()">Cancel</button></p>`;d.showModal()}
+function addF(){const u=$('#fu').value.trim().toLowerCase().replace(/^@/,'');if(!/^[a-z0-9_]{3,20}$/.test(u))return toast('Use 3-20 letters, numbers or _');if(S.friends.some(f=>f.user==u)||u==S.me.user)return toast('Already added');S.friends.push({user:u,name:u,pending:1});save();render()}
+function chatView(){const f=S.friends.find(x=>x.user==openChat),c=S.chats[openChat]||[];return `<button onclick="openChat=null;render()">‹ People</button><h2>${esc(f.name)}</h2><div>${c.map(x=>x.song&&tr(x.song)?`<div class="bub me" onclick="play('${x.song}')">♪ ${esc(tr(x.song).t)}</div>`:x.pl?`<div class="bub me">Shared playlist: ${esc((S.playlists.find(p=>p.id==x.pl)||{name:'(deleted)'}).name)}</div>`:`<div class="bub me">${esc(x.text)}</div>`).join('')||'<p class="s">Say hi or send a song with ⋯</p>'}</div><div style="display:flex;gap:8px;margin-top:12px"><input id="msg" placeholder="Message" onkeydown="if(event.key=='Enter')sendM()"><button class="pri" onclick="sendM()">Send</button></div><p class="s">${f.demo?'Demo friend: messages are saved locally and nobody receives them.':'Not delivered: real delivery between accounts needs a backend, which this build does not have.'}</p>`}
+function sendM(){const v=$('#msg').value.trim();if(!v)return;push(openChat,{from:'me',text:v,ts:Date.now()});render()}
+function photo(i){const f=i.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const c=document.createElement('canvas');c.width=c.height=256;const x=c.getContext('2d'),s=Math.min(im.width,im.height);x.drawImage(im,(im.width-s)/2,(im.height-s)/2,s,s,0,0,256,256);S.me.photo=c.toDataURL('image/jpeg',.8);save();render();toast('Photo updated')};im.src=r.result};r.readAsDataURL(f)}
+function saveP(){const n=$('#dn').value.trim(),u=$('#un').value.trim().toLowerCase();if(!n)return toast('Name can’t be empty');if(!/^[a-z0-9_]{3,20}$/.test(u))return toast('Username: 3-20 letters, numbers or _');S.me.name=n;S.me.user=u;save();render();toast('Profile saved')}
+function policy(){const d=$('#dlg');d.innerHTML=`<h2 style="margin-top:0">Privacy policy</h2><p><b>What Cast stores.</b> Your display name, username, profile photo, playlists, friends and chat messages. In this build they are saved only in your browser's local storage on this device. Cast has no server and does not receive this data.</p><p><b>YouTube.</b> Songs play through the embedded YouTube player. YouTube may collect data under Google's own privacy policy and terms. Cast does not control that.</p><p><b>Sharing.</b> Nothing is shared with other people unless a backend is connected. Demo friends are simulated.</p><p><b>Your control.</b> Edit your profile any time. Delete account removes all Cast data from this device immediately.</p><p><b>Contact.</b> Add your contact address here before launch. This text is a draft and should be reviewed by a lawyer before public release.</p><button class="pri" onclick="dlg.close()">Close</button>`;d.showModal()}
+function del(){const d=$('#dlg');d.innerHTML=`<h2 style="margin-top:0">Delete your account?</h2><p>All profile data, playlists, friends and chats on this device will be erased.</p><p><button class="dan" onclick="doDel()">Delete everything</button> <button onclick="dlg.close()">Cancel</button></p>`;d.showModal()}
+function doDel(){try{localStorage.removeItem(KEY)}catch(e){}S=def();cur=null;stop();dlg.close();tab='listen';render();toast('Account deleted')}
+render();
+</script></body></html>
